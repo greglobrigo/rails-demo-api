@@ -1,5 +1,5 @@
 class CatsController < ApplicationController
-  before_action :set_cat, only: %i[ show update destroy ]
+  before_action :set_cat, only: %i[show update destroy]
 
   # GET /cats
   def index
@@ -15,23 +15,26 @@ class CatsController < ApplicationController
 
   # POST /cats
   def create
+    request_body = JSON.parse(request.body.read)
+    if request_body.is_a?(Array)
+      response = []
+      request_body.each do |cat|
+        @cat = Cat.new(cat)
+        if @cat.save
+          response << @cat
+        else
+          return render json: @cat.errors, status: :unprocessable_entity
+        end
+      end
+      return render json: {message: 'success', data: response}, status: :ok
+    end
     @cat = Cat.new(cat_params)
 
     if @cat.save
-      render json: @cat, status: :created, location: @cat
+      render json: {message: 'success', data: @cat}, status: :ok
     else
       render json: @cat.errors, status: :unprocessable_entity
     end
-  end
-
-  def createMultiple
-   request_body = JSON.parse(request.body.read)
-   response = []
-    request_body.each do |cat|
-      Cat.create(cat)
-      response << cat
-    end
-    render json: {status: 'SUCCESS', message: 'Cats created', data: response}, status: :ok
   end
 
   # PATCH/PUT /cats/1
@@ -49,13 +52,14 @@ class CatsController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_cat
-      @cat = Cat.find(params[:id])
-    end
 
-    # Only allow a list of trusted parameters through.
-    def cat_params
-      params.require(:cat).permit(:name, :age, :breed, :price)
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_cat
+    @cat = Cat.find(params[:id])
+  end
+
+  # Only allow a list of trusted parameters through.
+  def cat_params
+    params.require(:cat).permit(:name, :age, :breed, :price)
+  end
 end
