@@ -24,6 +24,16 @@ class CatsController < ApplicationController
     end
   end
 
+  def createMultiple
+   request_body = JSON.parse(request.body.read)
+   response = []
+    request_body.each do |cat|
+      Cat.create(cat)
+      response << cat
+    end
+    render json: {status: 'SUCCESS', message: 'Cats created', data: response}, status: :ok
+  end
+
   # PATCH/PUT /cats/1
   def update
     if @cat.update(cat_params)
